@@ -1,0 +1,31 @@
+{
+  "name": "onlytesttask",
+  "version": "1.0.0",
+  "description": "test task for only",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack serve --mode development ",
+    "build": "webpack --mode production"
+  },
+  "author": "AFrolenkov",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "babel-loader": "^9.1.3",
+    "clean-webpack-plugin": "^4.0.0",
+    "html-webpack-plugin": "^4.5.2",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.17",
+    "@types/styled-components": "^5.1.34",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "styled-components": "^6.1.1"
+  }
+}
