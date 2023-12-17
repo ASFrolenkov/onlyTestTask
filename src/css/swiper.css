@@ -1,0 +1,28 @@
+button.swiper-button-disabled {
+    display: none;
+}
+
+.swiper-slide {
+    width: 320px;
+}
+
+.swiper-slide:nth-child(even) {
+    width: 400px;
+}
+
+@media (max-width: 426px) {
+    .swiper-slide {
+        width: 166px;
+        height: 90px;
+
+        transition: 0.5s;
+    }
+
+    .swiper-slide:nth-child(even) {
+        width: 255px;
+    }
+
+    .swiper-slide-next {
+        opacity: 0.4;
+    }
+}
