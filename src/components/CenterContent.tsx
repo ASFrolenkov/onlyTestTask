@@ -9,11 +9,17 @@ const CenterWrapper = styled.div`
 
     width: 530px;
     height: 530px;
+
+    @media (max-width: 426px) {
+        width: auto;
+        height: auto;
+
+        top: 208px;
+    }
 `
 
+//Расположение по центру блока. На перекрестии 
 const CenterContent:FC<PropsWithChildren> = ({children}) => {
-
-
      return (
         <CenterWrapper>
             {children}

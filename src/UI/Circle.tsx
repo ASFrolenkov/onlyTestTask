@@ -1,13 +1,10 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, FC } from 'react'
 import styled from 'styled-components'
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { getDeg } from '../helpers/getDeg';
 import { TextPlugin } from 'gsap/TextPlugin';
 
 gsap.registerPlugin(TextPlugin);
-
-import fakeApi from '../fakeApi/fakeApi.js';
 
 const CircleWrapper = styled.div`
     position: relative;
@@ -18,6 +15,10 @@ const CircleWrapper = styled.div`
     border: 1px solid rgba(66,86,122, 0.2);
     border-radius: 100%;
     z-index: 1;
+
+    @media (max-width: 426px) {
+        display: none;
+    }
 `
 const Center = styled.div`
     position: relative;
@@ -53,6 +54,7 @@ const ItemBtn = styled.button<{$x:number, $y:number, $active: boolean}>`
         line-height: 30px;
         color: #42567A;
         z-index: 1;
+        transition: font-size 0.25s;
     }
 
     &:after {
@@ -97,6 +99,11 @@ const Title = styled.span`
     width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    @media (max-width: 426px) {
+        left: -140px;
+        top: 50px;
+    }
 `
 
 const DateWrapper = styled.div`
@@ -112,107 +119,156 @@ const DateWrapper = styled.div`
     font-weight: 700;
     line-height: 160px;
     letter-spacing: -4px;
+
+    @media (max-width: 426px) {
+        font-size: 56px;
+        letter-spacing: -1px;
+    }
 `
 const PrevYear = styled.p`
     color: #5D5FEF;
     position: relative;
     right: 67px;
     bottom: 12px;
+
+    @media (max-width: 426px) {
+        right: 17px
+    }
 `
 const NextYear = styled.p`
     color: #EF5DA8;
     position: relative;
     left: 26px;
     bottom: 12px;
+
+    @media (max-width: 426px) {
+        left: 8px;
+    }
 `
 
+//высота и ширина зависят от родительскиого компонента
 const CircleComp = styled.div`
     width: 100%;
     height: 100%;
     position: relative;
 `
 
-const arrOfId = fakeApi.map((elem: {id: number}) => elem.id)
-//radius 262 + 2  2px - бордеры по бокам
-const radius = 264;
-const arc = 2 * Math.PI * (1 / fakeApi.length);
-
 const tl = gsap.timeline();
-const dateTl = gsap.timeline();
 
-const getYear = (currentId: number) => {
-    const result = {
-        prevYear: 0,
-        nextYear: 0
+const getDeg = (index: number, arr: number[]) => {
+    const leftHalfArr = arr.slice(0, arr.length/2);
+    const rightHalfArr = arr.slice(arr.length/2).reverse();
+
+    let isRightSide = false;
+
+    if (rightHalfArr.find((elem) => elem === index)) {
+        isRightSide = true;
     }
 
-    fakeApi.forEach((elem: {id: number, prevYear: number, nextYear: number}) => {
-        if (elem.id === currentId) {
-            result.nextYear = elem.nextYear;
-            result.prevYear = elem.prevYear;
-        }
-    })
-
-    return result;
+    return {
+        elemIndex: isRightSide ? rightHalfArr.indexOf(index) + 1 : leftHalfArr.indexOf(index),
+        isRightSide
+    }
 }
 
-const Circle = () => {
+interface IData {
+    id: number,
+    title: string,
+    prevYear: number,
+    nextYear: number
+}
+
+const savedYear = {
+    state: {
+        savedPrevYear: 0,
+        savedNextYear: 0,
+        inited: false,
+    },
+    getSavedYear(): {savedPrevYear: number, savedNextYear: number, inited: boolean} {
+        return this.state;
+    },
+    setSavedYear(savedPrevYear: number, savedNextYear: number) {
+        this.state = {
+            savedPrevYear,
+            savedNextYear,
+            inited: true,
+        }
+    }
+}
+
+//radius 262 + 2  2px - бордеры по бокам
+//радиус расположения элементов по окружности
+const Circle:FC<{data: IData[], radius?: number, currElem: number, setCurrElem: React.Dispatch<React.SetStateAction<number>>}> = ({data, radius = 264, currElem, setCurrElem}) => {
+    const arc = 2 * Math.PI * (1 / data.length);
+    const arrOfId = data.map((elem: {id: number}) => elem.id);
+
     const circle = useRef(null);
     const dateRef = useRef(null);
-    const prevYearRef = useRef(null);
-    const nextYearRef = useRef(null);
+
+    //получение года из date
+    const getYear = (currentId: number) => {
+        const result = {
+            prevYear: 0,
+            nextYear: 0,
+        }
+    
+        data.forEach((elem: {id: number, prevYear: number, nextYear: number}) => {
+            if (elem.id === currentId) {
+                result.nextYear = elem.nextYear;
+                result.prevYear = elem.prevYear;
+            }
+        })
+    
+        return result;
+    }
 
 
-    //Стейт прокинуть из компонента выше и соединить с стрелками 
-    const [activeId, setActiveId] = useState(1);
+    const {prevYear, nextYear} = getYear(currElem);
 
-    const {prevYear, nextYear} = getYear(activeId);
+    useGSAP(() => {
+       //очищаем анимацию, чтобы не стакалась
 
+       const {savedNextYear, savedPrevYear, inited} = savedYear.getSavedYear();
 
-    const {contextSafe} = useGSAP({dependencies: [activeId]});
-    const clickHandler = contextSafe((elem : number) => {
-        //очищаем анимацию, чтобы не стакалась
-        gsap.killTweensOf([circle.current, '.item', prevYearRef.current, nextYearRef.current])
+       const {elemIndex, isRightSide} = getDeg(currElem, arrOfId)
+       const deg = elemIndex*(360/arrOfId.length);
 
-        setActiveId(() => elem);
-        const {elemIndex, isRight} = getDeg(elem, arrOfId)
-        const deg = elemIndex*(360/arrOfId.length);
+       if (isRightSide) {
+           //right side
+           tl.to(circle.current, {rotation: -deg, duration: 0.8, ease: 'power1.inOut'})
+               .to('.item', {rotation: deg, duration: 0.8, ease: 'power1.inOut'}, '<')
+               .fromTo('.title', {opacity: 0}, {opacity: 1, duration: 1})
+       } else {
+           //left side
+           tl.to(circle.current, {rotation: deg, duration: 0.8, ease: 'power1.inOut'})
+               .to('.item', {rotation: -deg, duration: 0.8, ease: 'power1.inOut'}, '<')
+               .fromTo('.title', {opacity: 0}, {opacity: 1, duration: 1,})
+       }
 
-        if (isRight) {
-            //right side
-            tl.to(circle.current, {rotation: -deg, duration: 0.8, ease: 'power1.inOut'})
-                .to('.item', {rotation: deg, duration: 0.8, ease: 'power1.inOut'}, '<')
-                .fromTo('.title', {opacity: 0}, {opacity: 1, duration: 1})
-        } else {
-            //left side
-            tl.to(circle.current, {rotation: deg, duration: 0.8, ease: 'power1.inOut'})
-                .to('.item', {rotation: -deg, duration: 0.8, ease: 'power1.inOut'}, '<')
-                .fromTo('.title', {opacity: 0}, {opacity: 1, duration: 1,})
+        if (inited) {
+            gsap.from('.prevYear', {
+                textContent: savedPrevYear,
+                duration: 1,
+                snap: {
+                    textContent: 1
+                },
+            });
+            
+            gsap.from('.nextYear', {
+                textContent: savedNextYear,
+                duration: 1,
+                snap: {
+                    textContent: 1
+                },
+            });
         }
 
-        const nextYearState = getYear(elem);
-        dateTl.fromTo(prevYearRef.current, {
-            textContent: prevYear
-        }, {
-            textContent: nextYearState.prevYear,
-            duration: 1,
-            snap: {
-                textContent: 1
-            },
-        }, 0).play(0)
-        dateTl.fromTo(nextYearRef.current, {
-            textContent: nextYear
-        }, {
-            textContent: nextYearState.nextYear,
-            duration: 1,
-            snap: {
-                textContent: 1
-            },
-        }, 0).play(0)
-    });
+        savedYear.setSavedYear(prevYear, nextYear)
 
-    const currentData = fakeApi.find((elem: {id: number}) => {
-        return elem.id === activeId
+    }, [currElem, arrOfId])
+
+    const currentData = data.find((elem: {id: number}, index) => {
+        return index + 1 === currElem
     });
 
     return (
@@ -220,18 +276,21 @@ const Circle = () => {
             <CircleWrapper ref={circle}>
                 <Center>
                     <div>
-                        {fakeApi.map((elem: {id: number, title: string}, index: number) => {
-                            const angle = (index * arc) + 1.15; // +1 чтобы немного изменить ориентацию
+                        {data.map((elem: {id: number, title: string}, index: number) => {
+                            const angle = (index * arc) + 1.15; // +1. чтобы немного изменить ориентацию
                             const x = radius * Math.cos(angle);
                             const y = radius * Math.sin(angle);
 
                             return (<ItemBtn 
                                         $x={x} 
                                         $y={y} 
-                                        $active={activeId === elem.id} 
+                                        $active={currElem === index + 1} 
                                         key={elem.id} //в elem попадает уникальный id
-                                        onClick={() => {clickHandler(elem.id)}}>
-                                        <span className='item'>{elem.id}</span>
+                                        onClick={() => {
+                                            //clickHandler(index + 1)
+                                            setCurrElem(index + 1)
+                                        }}>
+                                        <span className='item'>{index + 1}</span>
                                     </ItemBtn>)
                         })}
                     </div>
@@ -241,10 +300,10 @@ const Circle = () => {
             {<Title className='title'>{currentData.title}</Title>}
 
             <DateWrapper ref={dateRef}>
-                <PrevYear ref={prevYearRef}>
+                <PrevYear className='prevYear'>
                     {prevYear}
                 </PrevYear>
-                <NextYear ref={nextYearRef}>
+                <NextYear className='nextYear'>
                     {nextYear}
                 </NextYear>
             </DateWrapper>

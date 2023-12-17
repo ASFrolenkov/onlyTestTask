@@ -12,11 +12,14 @@ const AppComponent = styled.div`
 
     display: grid;
     grid-template-columns: repeat(24, 1fr);
+
+    @media (max-width: 426px) {
+        display: block;
+    }
 `
 
+//основное наполнеие в блоке content
 const App = () => {
-
-
     return (
         <AppComponent>
             <BackgroundWrapper>

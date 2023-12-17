@@ -7,6 +7,10 @@ const ContentWrapper = styled.div`
     grid-column: 5 / 23;
     
     position: relative;
+
+    @media (max-width: 426px) {
+        height: 100%;
+    }
 `
 const InnerLines = styled.div`
     position: absolute;
@@ -40,8 +44,13 @@ const InnerLines = styled.div`
         
         width: 100%;
     }
+
+    @media (max-width: 426px) {
+        display: none;
+    }
 `
 
+//Задний фон. Линии
 const BackgroundWrapper: FC<PropsWithChildren> = ({children}) => {
     return (
         <>

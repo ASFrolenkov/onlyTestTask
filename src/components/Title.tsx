@@ -22,6 +22,17 @@ const TitleComponent = styled.h1`
 
 		height: 120px;
 	}
+
+	@media (max-width: 426px) {
+		font-size: 20px;
+		line-height: 24px;
+
+		width: 123px;
+
+		&:before {
+			display: none;
+		}
+	}
 `
 
 const Title = ({children}: {children: string}) => {
